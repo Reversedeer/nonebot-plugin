@@ -106,7 +106,7 @@ state = on_command(
 )
 
 #初始化配置配置文件
-@driver.on_bot_connect
+@config.on_bot_connect
 async def _():
     await init(g_temp)
     await config_check()
