@@ -1,4 +1,8 @@
+import os
+import platform
 import contextlib
+
+from nonebot.params import ArgStr
 from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11.permission import GROUP_OWNER, GROUP_ADMIN
 from nonebot.plugin import on_notice, on_command
@@ -66,7 +70,6 @@ red_packet = on_notice(
     handlers=[eventmonitor.hongbao]
 )
 
-
 on_command(
     "开启",
     aliases={"关闭"},
@@ -85,18 +88,39 @@ on_command(
     handlers=[eventmonitor.state]
 )
 
+on_command(
+    "检查更新",
+    priority=1,
+    permission=SUPERUSER,
+    block=True,
+    handlers=[eventmonitor.check_bot]
+)
 
-
-
-
-#功能状态
-state = on_command(
-    "event配置",
-    aliases={"event状态"},
-    permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER,
-    priority=10,
+restart = on_command(
+    "重启",
+    aliases={"restart"},
+    priority=1,
+    permission=SUPERUSER,
     block=True
 )
+
+@restart.got(
+        "flag",
+        prompt="确定是否重启？确定请回复[是|好|确定]（重启失败咱们将失去联系，请谨慎！"
+)
+async def _(flag: str = ArgStr("flag")) -> None:
+    if flag.lower() in {"true", "是", "好", "确定"}:
+        await restart.send("开始重启..请稍等...")
+        open("data/eventmonitor/new_version", "w")
+        if str(platform.system()).lower() == "windows":
+            import sys
+            python = sys.executable
+            os.execl(python, python, *sys.argv)
+        else:
+            os.system("./restart.sh")
+    else:
+        await restart.send("已取消操作...")
+
 
 with contextlib.suppress(Exception):
     from nonebot.plugin import PluginMetadata
@@ -110,7 +134,7 @@ with contextlib.suppress(Exception):
         supported_adapters={"onebot.v11"},
         extra={
             "author": "Reversedeer",
-            "version": "0.2.0",
+            "version": "0.3.0",
             "priority": 50,
         },
     )

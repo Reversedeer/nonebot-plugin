@@ -1,4 +1,3 @@
-
 import os
 import json
 import nonebot
@@ -42,7 +41,8 @@ class Utils:
         config = nonebot.get_driver().config
         self.superusers = {int(uid) for uid in config.superusers}
         self.nickname = next(iter(config.nickname))
-        self.chuo_cd: int = getattr(config, "chuo_cd", 0)
+        self.chuo_cd: int = getattr(config, "chuo_cd", 10)
+        self.current_version = '0.3.0'
         #戳一戳文案
         self.chuo_msg = [
             f"别戳了，{self.nickname}怕疼QwQ",
@@ -91,7 +91,7 @@ class Utils:
             "再戳就更大了qwq"
         ]
 
-    async def init(self):
+    async def init(self) -> None:
         """初始化配置文件"""   
         # 如果数据文件路径不存在，则创建目录
         if not os.path.exists(self.config_path):  
@@ -125,9 +125,8 @@ class Utils:
                 self.g_temp[gid] = snap_temp
                 # 将更新后的g_temp字典写入群组数据
             self.write_group_data(self.g_temp)
-            print(self.g_temp)
 
-    async def config_check(self):
+    async def config_check(self) -> None:
         """获取机器人实例"""
         bot = nonebot.get_bot()
         # 获取所有群组的列表
@@ -158,7 +157,6 @@ class Utils:
                             other_group[gid][group_name] = False
         self.g_temp.update(config_dict)
         # 将更新后的配置字典上传到配置文件中
-        print(self.g_temp)
         self.json_upload(self.address, config_dict)
 
     @staticmethod
@@ -226,7 +224,7 @@ class Utils:
         )
     
     @staticmethod
-    def write_group_data(g_temp):
+    def write_group_data(g_temp) -> None:
         """写入群配置"""
         with open(utils.address, 'w', encoding='utf-8') as f:
             json.dump(g_temp, f, indent=4, ensure_ascii=False)
