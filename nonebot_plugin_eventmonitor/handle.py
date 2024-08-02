@@ -162,7 +162,7 @@ class Eventmonitor:
                 tar_gz_url = (await update.fetch_data(tar_gz_url)).headers.get("Location")
                 if await update.download_file(tar_gz_url, update.latest_tar_gz):
                     logger.info("下载插件最新版文件完成...")
-                    error = await eventmonitor._file_handle(latest_version)
+                    error = await eventmonitor._file_handle()
                     if error:
                         return 998, error
                     logger.info("更新完毕，清理文件完成...")
@@ -190,7 +190,7 @@ class Eventmonitor:
         return 999, ""
 
     @staticmethod
-    async def _file_handle(latest_version: str) -> str:
+    async def _file_handle():
         # 接收最新版本号作为参数，并返回处理结果字符串
         
         if not update.temp_dir.exists():
@@ -212,9 +212,9 @@ class Eventmonitor:
         # 将压缩包中的所有文件解压到临时目录temp_dir中
         logger.info("解压文件压缩包完成....")
         # 记录日志，表示解压文件压缩包完成
-        latest_file = Path(update.temp_dir) / os.listdir(update.temp_dir)[0]
+        latest_file: Path = Path(update.temp_dir) / os.listdir(update.temp_dir)[0]
         # 获取临时目录中的第一个文件，作为最新版本的文件夹路径
-        update_info_file = Path(latest_file) / "nonebot_plugin_eventmonitor"
+        update_info_file: Path = Path(latest_file) / "nonebot_plugin_eventmonitor"
         # 获取最新版本文件夹中的第二个文件，作为更新信息文件的路径
         try:
             pycache_dir = os.path.join(update.destination_directory, '__pycache__')
@@ -224,17 +224,23 @@ class Eventmonitor:
             logger.info("正在备份插件目录...")
             for file in os.listdir(update.destination_directory):
                 if file != '__pycache__':
-                    temp_file = os.path.join(update.destination_directory, file)
-                    backup_file = os.path.join(update.backup_dir, file)
+                    temp_file: str = os.path.join(update.destination_directory, file)
+                    backup_file: str = os.path.join(update.backup_dir, file)
                     shutil.copy2(temp_file, backup_file)
-            logger.info("文件备份成功")
-            if os.path.exists(update.destination_directory):
-                shutil.rmtree(update.destination_directory)            
+            logger.info("文件备份成功")      
+            for root, dirs, files in os.walk(update.destination_directory):
+                # 删除所有文件
+                for file in files:
+                    file_path: str = os.path.join(root, file)
+                    os.remove(file_path)
+                # 删除所有子目录
+                for dir in dirs:
+                    dir_path: str = os.path.join(root, dir)
+                    shutil.rmtree(dir_path)     
             logger.info("开始更新插件...")
             for file in os.listdir(update_info_file): 
-                
-                update_file = os.path.join(update_info_file, file)
-                destination_file = os.path.join(update.destination_directory, file)
+                update_file: str = os.path.join(update_info_file, file)
+                destination_file: str = os.path.join(update.destination_directory, file)
                 shutil.copy2(update_file, destination_file)
             logger.info("插件更新成功!")
         except Exception as e:
@@ -243,6 +249,7 @@ class Eventmonitor:
             tf.close()
             # 关闭tarfile对象，释放资源
         os.system(f"poetry run pip install -r {(update_info_file / 'pyproject.toml').absolute()}")
+        # 使用os.system命令执行shell命令，安装更新后的依赖包        
         print(update_info_file)
         if update.temp_dir.exists():
             shutil.rmtree(update.temp_dir)
@@ -250,10 +257,6 @@ class Eventmonitor:
         if update.latest_tar_gz.exists():
             update.latest_tar_gz.unlink()
             # 删除最新版本的压缩包文件
-        with open(update.version_file, "w", encoding="utf-8") as f:
-            f.write(f"{latest_version}")
-            # 将最新版本号写入版本文件中
-        # 使用os.system命令执行shell命令，安装更新后的依赖包
         return ""
         # 返回一个空字符串
 
