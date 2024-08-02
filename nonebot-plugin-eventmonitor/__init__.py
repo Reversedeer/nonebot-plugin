@@ -3,16 +3,21 @@ import platform
 import contextlib
 
 from nonebot.params import ArgStr
+from nonebot import get_driver, require
 from nonebot.permission import SUPERUSER
-from nonebot.adapters.onebot.v11.permission import GROUP_OWNER, GROUP_ADMIN
 from nonebot.plugin import on_notice, on_command
-from nonebot import get_driver
+from  nonebot_plugin_apscheduler import scheduler
+from nonebot.adapters.onebot.v11.permission import GROUP_OWNER, GROUP_ADMIN
 
-from .handle import eventmonitor
 from .utils import utils
+from .update import update
+from .handle import eventmonitor
+
+require("nonebot_plugin_apscheduler")
+
+scheduler.add_job(update.auto_check_bot_update, "cron", hour = 8, misfire_grace_time=600)
 
 
-# 获取 Nonebot 驱动实例
 driver = get_driver()
 
 @driver.on_bot_connect
@@ -89,7 +94,7 @@ on_command(
 )
 
 on_command(
-    "检查更新",
+    "检查event更新",
     priority=1,
     permission=SUPERUSER,
     block=True,
@@ -106,8 +111,7 @@ restart = on_command(
 
 @restart.got(
         "flag",
-        prompt="确定是否重启？确定请回复[是|好|确定]（重启失败咱们将失去联系，请谨慎！"
-)
+        prompt="确定是否重启？确定请回复[是|好|确定]（重启失败咱们将失去联系，请谨慎！)")
 async def _(flag: str = ArgStr("flag")) -> None:
     if flag.lower() in {"true", "是", "好", "确定"}:
         await restart.send("开始重启..请稍等...")

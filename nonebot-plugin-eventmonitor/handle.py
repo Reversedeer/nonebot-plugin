@@ -22,7 +22,7 @@ from nonebot.adapters.onebot.v11 import (
 
 from .utils import utils
 from .config import config
-from .update import updata
+from .update import update
 
 class Eventmonitor:
     @staticmethod
@@ -146,9 +146,8 @@ class Eventmonitor:
 
     @staticmethod
     async def check_update(matcher: Matcher):
-        global latest_version
         logger.info("开始检查插件更新...")
-        data = await updata.get_latest_version_data()
+        data = await update.get_latest_version_data()
         if data:
             latest_version = data["name"]
             if utils.current_version < latest_version:
@@ -160,8 +159,8 @@ class Eventmonitor:
                                    f"当前版本：{utils.current_version}\n"
                                    f"最新版本：{latest_version}\n"
                                    "开始更新...")
-                tar_gz_url = (await updata.fetch_data(tar_gz_url)).headers.get("Location")
-                if await updata.download_file(tar_gz_url, updata.latest_tar_gz):
+                tar_gz_url = (await update.fetch_data(tar_gz_url)).headers.get("Location")
+                if await update.download_file(tar_gz_url, update.latest_tar_gz):
                     logger.info("下载插件最新版文件完成...")
                     error = await eventmonitor._file_handle(latest_version)
                     if error:
@@ -169,7 +168,7 @@ class Eventmonitor:
                     logger.info("更新完毕，清理文件完成...")
                     await matcher.send(message=Message(
                                 f"插件更新完成，版本：{utils.current_version} -> {latest_version}\n"
-                                f"插件更新日期：{data['created_at']}\n"
+                                f"插件更新日期：{data['published_at']}\n"
                         ),
                     )
                     return 200, ""
@@ -194,65 +193,66 @@ class Eventmonitor:
     async def _file_handle(latest_version: str) -> str:
         # 接收最新版本号作为参数，并返回处理结果字符串
         
-        if not updata.temp_dir.exists():
+        if not update.temp_dir.exists():
             # 检查临时目录是否存在，如果不存在则创建
-            updata.temp_dir.mkdir(exist_ok=True, parents=True)
+            update.temp_dir.mkdir(exist_ok=True, parents=True)
         
-        if updata.backup_dir.exists():
+        if update.backup_dir.exists():
             # 如果备份目录存在，则删除整个备份目录
-            shutil.rmtree(updata.backup_dir)
+            shutil.rmtree(update.backup_dir)
         tf = None
         # 初始化一个tarfile对象tf
-        updata.backup_dir.mkdir(exist_ok=True, parents=True)
+        update.backup_dir.mkdir(exist_ok=True, parents=True)
         # 创建备份目录，如果备份目录已存在，则不会重新创建
         logger.info("开始解压文件压缩包....")
         # 记录日志，表示开始解压文件压缩包
-        tf = tarfile.open(updata.latest_tar_gz)
+        tf = tarfile.open(update.latest_tar_gz)
         # 打开文件压缩包，获取tarfile对象tf
-        tf.extractall(updata.temp_dir)
+        tf.extractall(update.temp_dir)
         # 将压缩包中的所有文件解压到临时目录temp_dir中
         logger.info("解压文件压缩包完成....")
         # 记录日志，表示解压文件压缩包完成
-        latest_file = Path(updata.temp_dir) / os.listdir(updata.temp_dir)[0]
+        latest_file = Path(update.temp_dir) / os.listdir(update.temp_dir)[0]
         # 获取临时目录中的第一个文件，作为最新版本的文件夹路径
         update_info_file = Path(latest_file) / "nonebot_plugin_eventmonitor"
         # 获取最新版本文件夹中的第二个文件，作为更新信息文件的路径
         try:
-            pycache_dir = os.path.join(updata.destination_directory, '__pycache__')
+            pycache_dir = os.path.join(update.destination_directory, '__pycache__')
             if os.path.exists(pycache_dir):
                 shutil.rmtree(pycache_dir)
 
             logger.info("正在备份插件目录...")
-            for file in os.listdir(updata.destination_directory):
+            for file in os.listdir(update.destination_directory):
                 if file != '__pycache__':
-                    temp_file = os.path.join(updata.destination_directory, file)
-                    backup_file = os.path.join(updata.backup_dir, file)
+                    temp_file = os.path.join(update.destination_directory, file)
+                    backup_file = os.path.join(update.backup_dir, file)
                     shutil.copy2(temp_file, backup_file)
             logger.info("文件备份成功")
-            if os.path.exists(updata.destination_directory):
-                shutil.rmtree(updata.destination_directory)            
+            if os.path.exists(update.destination_directory):
+                shutil.rmtree(update.destination_directory)            
             logger.info("开始更新插件...")
             for file in os.listdir(update_info_file): 
                 
-                updata_file = os.path.join(update_info_file, file)
-                destination_file = os.path.join(updata.destination_directory, file)
-                shutil.copy2(updata_file, destination_file)
+                update_file = os.path.join(update_info_file, file)
+                destination_file = os.path.join(update.destination_directory, file)
+                shutil.copy2(update_file, destination_file)
             logger.info("插件更新成功!")
         except Exception as e:
             raise e
         if tf:
             tf.close()
             # 关闭tarfile对象，释放资源
-        if updata.temp_dir.exists():
-            shutil.rmtree(updata.temp_dir)
+        os.system(f"poetry run pip install -r {(update_info_file / 'pyproject.toml').absolute()}")
+        print(update_info_file)
+        if update.temp_dir.exists():
+            shutil.rmtree(update.temp_dir)
             # 删除临时目录及其中的所有文件
-        if updata.latest_tar_gz.exists():
-            updata.latest_tar_gz.unlink()
+        if update.latest_tar_gz.exists():
+            update.latest_tar_gz.unlink()
             # 删除最新版本的压缩包文件
-        with open(updata.version_file, "w", encoding="utf-8") as f:
+        with open(update.version_file, "w", encoding="utf-8") as f:
             f.write(f"{latest_version}")
             # 将最新版本号写入版本文件中
-        os.system(f"poetry run pip install -r {(update_info_file / 'pyproject.toml').absolute()}")
         # 使用os.system命令执行shell命令，安装更新后的依赖包
         return ""
         # 返回一个空字符串

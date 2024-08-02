@@ -1,6 +1,7 @@
 import os
 import json
 import nonebot
+
 from pathlib import Path
 
 from nonebot.adapters.onebot.v11 import (
@@ -14,6 +15,7 @@ from nonebot.adapters.onebot.v11 import (
     LuckyKingNotifyEvent,
 
 )
+
 class Utils:
     def __init__(self) -> None:
         self.usage = """
@@ -23,7 +25,9 @@ class Utils:
             指令4：群成员减少检测(当有人退群时，发送退群消息；当主人/superuser退群有特殊回复)
             指令5：群成员增加检测(当有人入群时，发送入群欢迎，当bot首次入群会乞讨管理，当主人/superuser入群会有特殊回复)
             指令6：管理员变动检测(当新增管理员或取消管理员时发送消息提示，当bot自身被上/下管理时有特殊回复)
-            指令7：运气王检测(检测抢红包检测后的运气王并发送提示消息)"""
+            指令7：运气王检测(检测抢红包检测后的运气王并发送提示消息)
+            指令8：检查event更新
+            指令9：重启"""
         self.notAllow = '功能未开启'
         self.path = {
             'chuo': ['戳一戳'],
@@ -42,7 +46,8 @@ class Utils:
         self.superusers = {int(uid) for uid in config.superusers}
         self.nickname = next(iter(config.nickname))
         self.chuo_cd: int = getattr(config, "chuo_cd", 10)
-        self.current_version = '0.3.0'
+        self.check_bot_update: bool = getattr(config, "isalive", True)
+        self.current_version = '0.2.1'
         #戳一戳文案
         self.chuo_msg = [
             f"别戳了，{self.nickname}怕疼QwQ",

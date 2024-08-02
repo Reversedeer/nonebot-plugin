@@ -1,10 +1,13 @@
 import os
 import httpx
+import nonebot
 import platform
 
 from pathlib import Path
 from nonebot.log import logger
-from nonebot.adapters.onebot.v11 import Bot
+from nonebot.adapters.onebot.v11 import Bot, Message
+
+from .utils import utils
 
 class Update:
     def __init__(self) -> None:
@@ -72,4 +75,34 @@ class Update:
             else:
                 return False
 
-updata = Update()
+    @staticmethod
+    async def auto_check_bot_update() -> None:
+        if utils.check_bot_update:
+            await Update.auto_check()
+
+    @staticmethod
+    async def auto_check() -> None:
+        bot = nonebot.get_bot()
+        if utils.check_bot_update:
+            data = await update.get_latest_version_data()
+            latest_version = data["name"]
+            if utils.current_version != latest_version:
+                if utils.current_version == latest_version:
+                    pass
+                elif utils.current_version < latest_version:
+                    await bot.send_private_msg(user_id=int(list(bot.config.superusers)[0]), message=Message(
+                        "✨插件自动检测更新✨\n"
+                        "插件名称: nonebot-plugin-eventmonitor\n"
+                        f"更新日期：{data['published_at']}\n"
+                        f"版本: {utils.current_version} -> {latest_version}\n"
+                        "主人可使用'检查event更新'指令自动更新插件"
+                        )
+                    )
+                else:
+                    await bot.send_private_msg(user_id=int(list(bot.config.superusers)[0]), message=Message(
+                        f"获取到当前版本{utils.current_version} > {latest_version}\n"
+                        "请检查是否有报错并核查版本号"
+                        )
+                    )
+
+update = Update()
