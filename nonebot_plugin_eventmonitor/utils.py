@@ -43,11 +43,12 @@ class Utils:
         self.config_path = Path() / 'data/eventmonitor'
         self.address = self.config_path / 'config.json'
         config = nonebot.get_driver().config
-        self.superusers = {int(uid) for uid in config.superusers}
-        self.nickname = next(iter(config.nickname))
+        self.superusers: set[int] = {int(uid) for uid in config.superusers}
+        self.nickname: str = next(iter(config.nickname), "Bot")
         self.chuo_cd: int = getattr(config, "chuo_cd", 10)
         self.check_bot_update: bool = getattr(config, "isalive", True)
-        self.current_version = '0.2.1'
+        self.check_txt_img:bool = getattr(config, "event_img", False)
+        self.current_version = '0.3.2'
         #戳一戳文案
         self.chuo_msg = [
             f"别戳了，{self.nickname}怕疼QwQ",
@@ -212,6 +213,12 @@ class Utils:
         if gid in g_temp and not g_temp[gid]["red_package"]:
             return False
         return g_temp[gid]["red_package"]
+    
+    @staticmethod
+    async def check_txt_to_img(check_txt_img):
+        if not utils.check_txt_img:
+            return False
+        return check_txt_img
 
     def get_function_name(self, key: str) -> str:
         """根据关键词获取对应功能名称"""
