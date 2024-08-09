@@ -10,6 +10,7 @@ from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.adapters.onebot.v11 import (
     Bot, Message,
+    MessageSegment,
     PokeNotifyEvent,
     HonorNotifyEvent,
     GroupUploadNoticeEvent,
@@ -23,6 +24,7 @@ from nonebot.adapters.onebot.v11 import (
 from .utils import utils
 from .config import config
 from .update import update
+from .txt2img import txt_to_img
 
 class Eventmonitor:
     @staticmethod
@@ -39,7 +41,11 @@ class Eventmonitor:
         if cd > utils.chuo_cd or event.get_user_id() in nonebot.get_driver().config.superusers:
             utils.chuo_CD_dir.update({uid: event.time})
             rely_msg: str = await config.chuo_send_msg()
-            await matcher.finish(message=Message(rely_msg))
+            if not (await utils.check_txt_to_img(utils.check_txt_img)):
+                await matcher.finish(rely_msg)
+            else:
+                await matcher.send(MessageSegment.image(await txt_to_img.txt_to_img(rely_msg)))
+
     #群荣誉事件
     @staticmethod                                                         
     async def qrongyu(matcher: Matcher, event: HonorNotifyEvent, bot: Bot) -> None:
@@ -47,15 +53,22 @@ class Eventmonitor:
             return
         bot_qq = int(bot.self_id)
         rely_msg: str = await config.monitor_rongyu(event.honor_type, event.user_id, bot_qq)
-        await matcher.finish(message=Message(rely_msg), at_sender=True)
+        if not (await utils.check_txt_to_img(utils.check_txt_img)):
+            await matcher.finish(rely_msg)
+        else:
+            await matcher.send(MessageSegment.image(await txt_to_img.txt_to_img(rely_msg)), at_sender=True)
 
     #群文件事件
     @staticmethod                                                                    
     async def files(matcher: Matcher, event: GroupUploadNoticeEvent) -> None:
         if not (await utils.check_file(utils.g_temp, str(event.group_id))):
             return
-        rely_msg: Message= await config.upload_files(event.user_id)
-        await matcher.finish(message=rely_msg, at_sender=True)
+        rely_msg= await config.upload_files(event.user_id)
+        if not (await utils.check_txt_to_img(utils.check_txt_img)):
+            await matcher.finish(rely_msg)
+        else:
+            await matcher.send(MessageSegment.image(await txt_to_img.txt_to_img(str(rely_msg))), at_sender=True)
+
 
     #退群事件
     @staticmethod
@@ -63,7 +76,10 @@ class Eventmonitor:
         if not (await utils.check_del_user(utils.g_temp, str(event.group_id))):
             return
         rely_msg= await config.del_user_bye(event.time, event.user_id)
-        await matcher.finish(message=Message(rely_msg))
+        if not (await utils.check_txt_to_img(utils.check_txt_img)):
+            await matcher.finish(rely_msg)
+        else:
+            await matcher.send(MessageSegment.image(await txt_to_img.txt_to_img(str(rely_msg))), at_sender=True)
 
     #入群事件
     @staticmethod
@@ -72,8 +88,11 @@ class Eventmonitor:
         if not (await utils.check_add_user(utils.g_temp, str(event.group_id))):
             return
         bot_qq = int(bot.self_id)
-        rely_msg = await  config.add_user_wecome(event.time, event.user_id, bot_qq)
-        await matcher.finish(message=Message(rely_msg), at_sender=True)
+        rely_msg = await config.add_user_wecome(event.time, event.user_id, bot_qq)
+        if not (await utils.check_txt_to_img(utils.check_txt_img)):
+            await matcher.finish(rely_msg)
+        else:
+            await matcher.send(MessageSegment.image(await txt_to_img.txt_to_img(str(rely_msg))), at_sender=True)
 
     #管理员变动
     @staticmethod
@@ -82,7 +101,10 @@ class Eventmonitor:
             return
         bot_qq = int(bot.self_id)
         rely_msg: str = await config.admin_changer(event.sub_type, event.user_id, bot_qq)
-        await matcher.finish(message=Message(rely_msg), at_sender=True)
+        if not (await utils.check_txt_to_img(utils.check_txt_img)):
+            await matcher.finish(rely_msg)
+        else:
+            await matcher.send(MessageSegment.image(await txt_to_img.txt_to_img(rely_msg)), at_sender=True)
         
     #红包运气王
     @staticmethod
@@ -91,7 +113,10 @@ class Eventmonitor:
             return
         bot_qq = int(bot.self_id)
         rely_msg = await config.rad_package_change(event.target_id, bot_qq)
-        await matcher.finish(message=Message(rely_msg), at_sender=True)
+        if not (await utils.check_txt_to_img(utils.check_txt_img)):
+            await matcher.finish(rely_msg)
+        else:
+            await matcher.send(MessageSegment.image(await txt_to_img.txt_to_img(rely_msg)), at_sender=True)
 
     @staticmethod
     async def switch(matcher: Matcher, event: GroupMessageEvent) -> None:
@@ -105,28 +130,40 @@ class Eventmonitor:
                 utils.g_temp[gid][key] = True
                 utils.write_group_data(utils.g_temp)
                 name = utils.get_function_name(key)
-                await matcher.finish(f"{name}功能已开启喵")
+                if not (await utils.check_txt_to_img(utils.check_txt_img)):
+                    await matcher.finish(f"{name}功能已开启喵")
+                else:
+                    await matcher.send(MessageSegment.image(await txt_to_img.txt_to_img(f"{name}功能已开启喵")))
         elif "禁止" in command or "关闭" in command:
             if key := utils.get_command_type(command):
                 utils.g_temp[gid][key] = False
                 utils.write_group_data(utils.g_temp)
                 name = utils.get_function_name(key)
-                await matcher.finish(f"{name}功能已禁用喵")
+                if not (await utils.check_txt_to_img(utils.check_txt_img)):
+                    await matcher.finish(f"{name}功能已关闭喵")
+                else:
+                    await matcher.send(MessageSegment.image(await txt_to_img.txt_to_img(f"{name}功能已关闭喵")))
     
     @staticmethod
     async def state(matcher: Matcher, event:GroupMessageEvent) -> None:
         gid = str(event.group_id)
         with open(utils.address, "r", encoding="utf-8") as f:
             group_status = json.load(f)
+
         if gid not in group_status:
             await utils.config_check()
-        else:
-            await matcher.finish(f"群{gid}的Event配置状态：\n" + "\n".join
-            (
-                [f"{utils.path[func][0]}: {'开启' if group_status[gid][func] else '关闭'}" 
-                 for func in utils.path]
+            with open(utils.address, "r", encoding="utf-8") as f:
+                group_status = json.load(f)
+
+        rely_msg = (f"群{gid}的Event配置状态：\n" + "\n".join(
+                    [f"{utils.path[func][0]}: {'开启' if group_status[gid][func] else '关闭'}" 
+                    for func in utils.path]
+                )
             )
-        )
+        if not (await utils.check_txt_to_img(utils.check_txt_img)):
+            await matcher.finish(rely_msg)
+        else:
+            await matcher.send(MessageSegment.image(await txt_to_img.txt_to_img(rely_msg)))
             
     @staticmethod
     async def check_bot(matcher: Matcher):
@@ -134,15 +171,13 @@ class Eventmonitor:
             code, error = await eventmonitor.check_update(matcher)
             if error:
                 logger.error(f"错误: {error}", "插件检查更新")
-                await matcher.send(f"更新插件nonebot-plugin-evenrmonitor时发生错误:\n{error}")
+                await matcher.send(f"下载更新插件nonebot-plugin-evenrmonitor时发生网络错误:\n{error}")
         except Exception as e:
-            logger.error("更新插件nonebot-plugin-evenrmonitor时发生错误", "检查更新", e=e)
-            await matcher.send(f"更新插件nonebot-plugin-evenrmonitor时发生错误 \n{type(e)}: {e}")
+            logger.error("备份更新插件nonebot-plugin-evenrmonitor时发生错误", e=e)
+            await matcher.send(f"备份更新插件nonebot-plugin-evenrmonitor时发生错误 \n{type(e)}: {e}")
         else:
             if code == 200:
                 await matcher.finish("更新完毕,请重启bot....")
-
-
 
     @staticmethod
     async def check_update(matcher: Matcher):
@@ -245,12 +280,11 @@ class Eventmonitor:
             logger.info("插件更新成功!")
         except Exception as e:
             raise e
+        os.system(f"poetry run pip install -r {(update_info_file / 'requirements.txt').absolute()}")
+        # 使用os.system命令执行shell命令，安装更新后的依赖包 
         if tf:
             tf.close()
             # 关闭tarfile对象，释放资源
-        os.system(f"poetry run pip install -r {(update_info_file / 'pyproject.toml').absolute()}")
-        # 使用os.system命令执行shell命令，安装更新后的依赖包        
-        print(update_info_file)
         if update.temp_dir.exists():
             shutil.rmtree(update.temp_dir)
             # 删除临时目录及其中的所有文件

@@ -15,7 +15,7 @@ from .handle import eventmonitor
 
 require("nonebot_plugin_apscheduler")
 
-scheduler.add_job(update.auto_check_bot_update, "cron", hour = 8, misfire_grace_time=600)
+scheduler.add_job(update.auto_check_bot_update, 'cron', hour = 8, misfire_grace_time=600)
 
 
 driver = get_driver()
@@ -24,6 +24,7 @@ driver = get_driver()
 async def _() -> None:
     await utils.init()
     await utils.config_check()
+    await update.auto_check()
 
 #戳一戳
 chuo = on_notice(
@@ -94,7 +95,7 @@ on_command(
 )
 
 on_command(
-    "检查event更新",
+    "更新插件eventmonitor",
     priority=1,
     permission=SUPERUSER,
     block=True,
@@ -138,7 +139,7 @@ with contextlib.suppress(Exception):
         supported_adapters={"onebot.v11"},
         extra={
             "author": "Reversedeer",
-            "version": "0.3.0",
+            "version": "0.3.2",
             "priority": 50,
         },
     )
