@@ -1,3 +1,4 @@
+"""依赖文件"""
 import os
 import json
 import nonebot
@@ -26,8 +27,9 @@ class Utils:
             指令5：群成员增加检测(当有人入群时，发送入群欢迎，当bot首次入群会乞讨管理，当主人/superuser入群会有特殊回复)
             指令6：管理员变动检测(当新增管理员或取消管理员时发送消息提示，当bot自身被上/下管理时有特殊回复)
             指令7：运气王检测(检测抢红包检测后的运气王并发送提示消息)
-            指令8：检查event更新
-            指令9：重启"""
+            指令8：更新插件eventmonitor
+            指令9：重启
+            指令10：event配置"""
         self.notAllow = '功能未开启'
         self.path = {
             'chuo': ['戳一戳'],

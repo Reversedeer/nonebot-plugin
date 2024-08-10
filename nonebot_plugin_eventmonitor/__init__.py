@@ -1,3 +1,4 @@
+"""入口文件"""
 import os
 import platform
 import contextlib
@@ -6,7 +7,6 @@ from nonebot.params import ArgStr
 from nonebot import get_driver, require
 from nonebot.permission import SUPERUSER
 from nonebot.plugin import on_notice, on_command
-from  nonebot_plugin_apscheduler import scheduler
 from nonebot.adapters.onebot.v11.permission import GROUP_OWNER, GROUP_ADMIN
 
 from .utils import utils
@@ -14,6 +14,8 @@ from .update import update
 from .handle import eventmonitor
 
 require("nonebot_plugin_apscheduler")
+
+from nonebot_plugin_apscheduler import scheduler
 
 scheduler.add_job(update.auto_check_bot_update, 'cron', hour = 8, misfire_grace_time=600)
 
@@ -86,8 +88,8 @@ on_command(
 )
 
 on_command(
-    "event配置",
-    aliases={"event状态"},
+    "eventstatus",
+    aliases={"event配置"},
     permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER,
     priority=10,
     block=True,
@@ -98,8 +100,16 @@ on_command(
     "更新插件eventmonitor",
     priority=1,
     permission=SUPERUSER,
-    block=True,
+    block=False,
     handlers=[eventmonitor.check_bot]
+)
+
+on_command(
+    "event指令帮助",
+    aliases={"eventhelp"},
+    priority=20,
+    block=True,
+    handlers=[eventmonitor.usage]
 )
 
 restart = on_command(
