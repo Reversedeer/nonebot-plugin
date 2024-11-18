@@ -146,7 +146,7 @@ with contextlib.suppress(Exception):
         usage=utils.usage,
         type="application",
         homepage="https://github.com/Reversedeer/nonebot_plugin_eventmonitor",
-        supported_adapters={"onebot.v11"},
+        supported_adapters={"~onebot.v11"},
         extra={
             "author": "Reversedeer",
             "version": "0.3.2",
