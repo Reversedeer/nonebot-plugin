@@ -1,4 +1,5 @@
 """入口文件"""
+
 import os
 import platform
 import contextlib
@@ -7,7 +8,11 @@ from nonebot.params import ArgStr
 from nonebot import get_driver, require
 from nonebot.permission import SUPERUSER
 from nonebot.plugin import on_notice, on_command
-from nonebot.adapters.onebot.v11.permission import GROUP_OWNER, GROUP_ADMIN
+from nonebot_plugin_apscheduler import scheduler
+from nonebot.adapters.onebot.v11.permission import (
+    GROUP_OWNER,
+    GROUP_ADMIN,
+)
 
 from .utils import utils
 from .update import update
@@ -15,12 +20,16 @@ from .handle import eventmonitor
 
 require("nonebot_plugin_apscheduler")
 
-from nonebot_plugin_apscheduler import scheduler
-
-scheduler.add_job(update.auto_check_bot_update, 'cron', hour = 8, misfire_grace_time=600)
+scheduler.add_job(
+    update.auto_check_bot_update,
+    "cron",
+    hour=8,
+    misfire_grace_time=600,
+)
 
 
 driver = get_driver()
+
 
 @driver.on_bot_connect
 async def _() -> None:
@@ -28,54 +37,55 @@ async def _() -> None:
     await utils.config_check()
     await update.auto_check()
 
-#戳一戳
+
+# 戳一戳
 chuo = on_notice(
     rule=utils._is_poke,
     priority=10,
     block=False,
-    handlers=[eventmonitor.chuo]
+    handlers=[eventmonitor.chuo],
 )
 # 群荣誉
 qrongyu = on_notice(
     rule=utils._is_rongyu,
     priority=50,
     block=True,
-    handlers=[eventmonitor.qrongyu]
+    handlers=[eventmonitor.qrongyu],
 )
 # 群文件
 files = on_notice(
     rule=utils._is_checker,
     priority=50,
     block=True,
-    handlers=[eventmonitor.files]
+    handlers=[eventmonitor.files],
 )
 # 群员减少
 del_user = on_notice(
     rule=utils._is_del_user,
     priority=50,
     block=True,
-    handlers=[eventmonitor.del_user]
+    handlers=[eventmonitor.del_user],
 )
 # 群员增加
 add_user = on_notice(
     rule=utils._is_add_user,
     priority=50,
     block=True,
-    handlers=[eventmonitor.add_user]
+    handlers=[eventmonitor.add_user],
 )
 # 群管理
 group_admin = on_notice(
     rule=utils._is_admin_change,
     priority=50,
     block=True,
-    handlers=[eventmonitor.admin_chance]
+    handlers=[eventmonitor.admin_chance],
 )
 # 红包
 red_packet = on_notice(
     rule=utils._is_red_packet,
     priority=50,
     block=True,
-    handlers=[eventmonitor.hongbao]
+    handlers=[eventmonitor.hongbao],
 )
 
 on_command(
@@ -84,16 +94,16 @@ on_command(
     priority=10,
     permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER,
     block=True,
-    handlers=[eventmonitor.switch]
+    handlers=[eventmonitor.switch],
 )
 
 on_command(
     "eventstatus",
-    aliases={"event配置"},
+    aliases={"event 配置"},
     permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER,
     priority=10,
     block=True,
-    handlers=[eventmonitor.state]
+    handlers=[eventmonitor.state],
 )
 
 on_command(
@@ -101,7 +111,7 @@ on_command(
     priority=1,
     permission=SUPERUSER,
     block=False,
-    handlers=[eventmonitor.check_bot]
+    handlers=[eventmonitor.check_bot],
 )
 
 on_command(
@@ -109,7 +119,7 @@ on_command(
     aliases={"eventhelp"},
     priority=20,
     block=True,
-    handlers=[eventmonitor.usage]
+    handlers=[eventmonitor.usage],
 )
 
 restart = on_command(
@@ -117,18 +127,26 @@ restart = on_command(
     aliases={"restart"},
     priority=1,
     permission=SUPERUSER,
-    block=True
+    block=True,
 )
 
+
 @restart.got(
-        "flag",
-        prompt="确定是否重启？确定请回复[是|好|确定]（重启失败咱们将失去联系，请谨慎！)")
+    "flag",
+    prompt="确定是否重启？确定请回复[是|好|确定]（重启失败咱们将失去联系，请谨慎！)",
+)
 async def _(flag: str = ArgStr("flag")) -> None:
-    if flag.lower() in {"true", "是", "好", "确定"}:
+    if flag.lower() in {
+        "true",
+        "是",
+        "好",
+        "确定",
+    }:
         await restart.send("开始重启..请稍等...")
         open("data/eventmonitor/new_version", "w")
         if str(platform.system()).lower() == "windows":
             import sys
+
             python = sys.executable
             os.execl(python, python, *sys.argv)
         else:
@@ -146,7 +164,7 @@ with contextlib.suppress(Exception):
         usage=utils.usage,
         type="application",
         homepage="https://github.com/Reversedeer/nonebot_plugin_eventmonitor",
-        supported_adapters={"~onebot.v11"},
+        supported_adapters={"onebot.v11"},
         extra={
             "author": "Reversedeer",
             "version": "0.3.2",

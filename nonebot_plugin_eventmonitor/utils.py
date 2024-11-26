@@ -1,4 +1,5 @@
 """依赖文件"""
+
 import os
 import json
 import nonebot
@@ -14,8 +15,8 @@ from nonebot.adapters.onebot.v11 import (
     GroupIncreaseNoticeEvent,
     GroupAdminNoticeEvent,
     LuckyKingNotifyEvent,
-
 )
+
 
 class Utils:
     def __init__(self) -> None:
@@ -30,28 +31,28 @@ class Utils:
             指令8：更新插件eventmonitor
             指令9：重启
             指令10：event配置"""
-        self.notAllow = '功能未开启'
+        self.notAllow = "功能未开启"
         self.path = {
-            'chuo': ['戳一戳'],
-            'honor': ['群荣誉检测'],
-            'files': ['群文件检测'],
-            'del_user': ['群成员减少检测'],
-            'add_user': ['群成员增加检测'],
-            'admin': ['管理员变动检测'],
-            'red_package': ['运气王检测']
-            }
+            "chuo": ["戳一戳"],
+            "honor": ["群荣誉检测"],
+            "files": ["群文件检测"],
+            "del_user": ["群成员减少检测"],
+            "add_user": ["群成员增加检测"],
+            "admin": ["管理员变动检测"],
+            "red_package": ["运气王检测"],
+        }
         self.g_temp = {}
         self.chuo_CD_dir = {}
-        self.config_path = Path() / 'data/eventmonitor'
-        self.address = self.config_path / 'config.json'
+        self.config_path = Path() / "data/eventmonitor"
+        self.address = self.config_path / "config.json"
         config = nonebot.get_driver().config
         self.superusers: set[int] = {int(uid) for uid in config.superusers}
         self.nickname: str = next(iter(config.nickname), "Bot")
         self.chuo_cd: int = getattr(config, "chuo_cd", 10)
         self.check_bot_update: bool = getattr(config, "isalive", True)
-        self.check_txt_img:bool = getattr(config, "event_img", False)
-        self.current_version = '0.3.2'
-        #戳一戳文案
+        self.check_txt_img: bool = getattr(config, "event_img", False)
+        self.current_version = "0.3.2"
+        # 戳一戳文案
         self.chuo_msg = [
             f"别戳了，{self.nickname}怕疼QwQ",
             f"呜呜，再戳{self.nickname}脸都要肿了",
@@ -95,20 +96,23 @@ class Utils:
             "再戳一下试试？",
             "正在关闭对您的所有服务...关闭成功",
             "啊呜，太舒服刚刚竟然睡着了。什么事？",
-            "正在定位您的真实地址...定位成功。轰炸机已起飞"
-            "再戳就更大了qwq"
+            "正在定位您的真实地址...定位成功。轰炸机已起飞" "再戳就更大了qwq",
         ]
 
     async def init(self) -> None:
-        """初始化配置文件"""   
+        """初始化配置文件"""
         # 如果数据文件路径不存在，则创建目录
-        if not os.path.exists(self.config_path):  
-            os.makedirs(self.config_path)  
+        if not os.path.exists(self.config_path):
+            os.makedirs(self.config_path)
         if os.path.exists(self.address):
             # 如果数据文件路径存在，尝试读取数据文件（config.json）
             try:
                 # 如果数据文件路径存在，尝试读取数据文件（config.json）
-                with open(self.address, "r", encoding="utf-8") as f:
+                with open(
+                    self.address,
+                    "r",
+                    encoding="utf-8",
+                ) as f:
                     self.g_temp.update(json.load(f))
             except json.decoder.JSONDecodeError:
                 # 如果文件为空或包含无效 JSON，则重新初始化配置
@@ -117,7 +121,7 @@ class Utils:
             # 如果群数据文件不存在，则初始化g_temp为空字典，并写入对应的文件
             bot = nonebot.get_bot()
             group_list = await bot.get_group_list()
-            #从group_list中遍历每个群组
+            # 从group_list中遍历每个群组
             for group in group_list:
                 # 为每个群组创建一个临时字典temp，用于存储群组的配置信息
                 snap_temp = {}
@@ -125,7 +129,7 @@ class Utils:
                     # 将群组的每个配置项设置为默认值True
                     snap_temp[g_name] = True
                     # 特殊情况下（g_name为'red_package'），将该配置项设为False
-                    if g_name in ['red_package']:
+                    if g_name in ["red_package"]:
                         snap_temp[g_name] = False
                 # 获取群组ID并转换为字符串类型
                 gid = str(group["group_id"])
@@ -141,10 +145,10 @@ class Utils:
         group_list = await bot.get_group_list()
         # 加载配置文件，得到一个包含配置信息的字典
         with open(self.address, "r", encoding="utf-8") as f:
-            config_dict = json.load(f)  
+            config_dict = json.load(f)
         # 遍历所有群组
         for group in group_list:
-            gid = str(group['group_id']) 
+            gid = str(group["group_id"])
             # 如果配置字典中没有该群组的信息，将其添加到配置字典中
             if not config_dict.get(gid):
                 config_dict[gid] = {}
@@ -152,7 +156,7 @@ class Utils:
                 for group_name in self.path:
                     config_dict[gid][group_name] = True
                     # 特殊情况下（group_name为'red_package'），将该配置项设为False
-                    if group_name in ['red_package']:
+                    if group_name in ["red_package"]:
                         config_dict[gid][group_name] = False
             else:
                 # 如果配置字典中已存在该群组的信息，检查是否有缺失的配置项，并添加默认值
@@ -161,61 +165,61 @@ class Utils:
                     if other_group.get(group_name) is None:
                         other_group[gid][group_name] = True
                         # 特殊情况下（group_name为'red_package'），将该配置项设为False
-                        if group_name in ['red_package']:
+                        if group_name in ["red_package"]:
                             other_group[gid][group_name] = False
         self.g_temp.update(config_dict)
         # 将更新后的配置字典上传到配置文件中
         self.json_upload(self.address, config_dict)
 
     @staticmethod
-    async def check_chuo(g_temp, gid: str) -> bool: 
+    async def check_chuo(g_temp, gid: str) -> bool:
         """检查戳一戳是否允许"""
         if gid in g_temp and not g_temp[gid]["chuo"]:
             return False
         return g_temp[gid]["chuo"]
-    
+
     @staticmethod
     async def check_honor(g_temp, gid: str) -> bool:
-        """检查群荣誉是否允许 """
+        """检查群荣誉是否允许"""
         if gid in g_temp and not g_temp[gid]["honor"]:
             return False
         return g_temp[gid]["honor"]
-    
+
     @staticmethod
     async def check_file(g_temp, gid: str) -> bool:
         """检查群文件是否允许"""
         if gid in g_temp and not g_temp[gid]["files"]:
             return False
         return g_temp[gid]["files"]
-    
+
     @staticmethod
     async def check_del_user(g_temp, gid: str) -> bool:
-        """检查群成员减少是否允许 """
+        """检查群成员减少是否允许"""
         if gid in g_temp and not g_temp[gid]["del_user"]:
             return False
         return g_temp[gid]["del_user"]
-    
+
     @staticmethod
     async def check_add_user(g_temp, gid: str) -> bool:
         """检查群成员增加是否允许"""
         if gid in g_temp and not g_temp[gid]["add_user"]:
             return False
         return g_temp[gid]["add_user"]
-    
+
     @staticmethod
     async def check_admin(g_temp, gid: str) -> bool:
         """检查管理员是否允许"""
         if gid in g_temp and not g_temp[gid]["admin"]:
             return False
         return g_temp[gid]["admin"]
-    
+
     @staticmethod
     async def check_red_package(g_temp, gid: str) -> bool:
         """检查运气王是否允许"""
         if gid in g_temp and not g_temp[gid]["red_package"]:
             return False
         return g_temp[gid]["red_package"]
-    
+
     @staticmethod
     async def check_txt_to_img(check_txt_img):
         if not utils.check_txt_img:
@@ -236,52 +240,67 @@ class Utils:
             ),
             "",
         )
-    
+
     @staticmethod
     def write_group_data(g_temp) -> None:
         """写入群配置"""
-        with open(utils.address, 'w', encoding='utf-8') as f:
-            json.dump(g_temp, f, indent=4, ensure_ascii=False)
+        with open(utils.address, "w", encoding="utf-8") as f:
+            json.dump(
+                g_temp,
+                f,
+                indent=4,
+                ensure_ascii=False,
+            )
 
     @staticmethod
     def json_upload(path, config_dict) -> None:
         """将 JSON 数据上传到指定路径"""
-        with open(path, 'w', encoding='utf-8') as f:
-            json.dump(config_dict, f, ensure_ascii=False, indent=4)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(
+                config_dict,
+                f,
+                ensure_ascii=False,
+                indent=4,
+            )
 
     @staticmethod
     async def _is_poke(event: Event) -> bool:
         """获取戳一戳状态"""
         return isinstance(event, PokeNotifyEvent) and event.is_tome()
-    
+
     @staticmethod
     async def _is_rongyu(event: Event) -> bool:
         """获取群荣誉变更"""
         return isinstance(event, HonorNotifyEvent)
-    
+
     @staticmethod
     async def _is_checker(event: Event) -> bool:
         """获取文件上传"""
         return isinstance(event, GroupUploadNoticeEvent)
-    
+
     @staticmethod
     async def _is_del_user(event: Event) -> bool:
         """获取群成员减少"""
         return isinstance(event, GroupDecreaseNoticeEvent)
-    
+
     @staticmethod
     async def _is_add_user(event: Event) -> bool:
         """获取群成员增加"""
         return isinstance(event, GroupIncreaseNoticeEvent)
-    
+
     @staticmethod
-    async def _is_admin_change(event: Event) -> bool:
+    async def _is_admin_change(
+        event: Event,
+    ) -> bool:
         """获取管理员变动"""
         return isinstance(event, GroupAdminNoticeEvent)
-    
+
     @staticmethod
-    async def _is_red_packet(event: Event) -> bool:
+    async def _is_red_packet(
+        event: Event,
+    ) -> bool:
         """获取红包运气王"""
         return isinstance(event, LuckyKingNotifyEvent)
+
 
 utils = Utils()

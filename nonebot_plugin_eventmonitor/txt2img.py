@@ -1,4 +1,5 @@
 """一个工具类, 将文本转换为图片, 根据文本长度自动换行"""
+
 from io import BytesIO
 from pathlib import Path
 
@@ -49,11 +50,20 @@ class TxtToImg:
         lines = text.count("\n")
         image = Image.new(
             "L",
-            (self.LINE_CHAR_COUNT * font_size // 2 + 50, font_size * lines + 50),
+            (
+                self.LINE_CHAR_COUNT * font_size // 2 + 50,
+                font_size * lines + 50,
+            ),
             "white",
         )
         draw_table = ImageDraw.Draw(im=image)
-        draw_table.text(xy=(25, 25), text=text, fill="#000000", font=d_font, spacing=4)
+        draw_table.text(
+            xy=(25, 25),
+            text=text,
+            fill="#000000",
+            font=d_font,
+            spacing=4,
+        )
         new_img = image.convert("RGB")
         img_byte = BytesIO()
         new_img.save(img_byte, format="PNG")
