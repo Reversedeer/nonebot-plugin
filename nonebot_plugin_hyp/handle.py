@@ -8,11 +8,11 @@ from nonebot.params import CommandArg
 from typing import Callable, NoReturn
 from nonebot.matcher import Matcher
 
-from .utils import Utils
+from .utils import Config
 from .message import msg
 from .api import api
 
-plugin_config = get_plugin_config(Utils)
+plugin_config = get_plugin_config(Config)
 
 
 class Hyp:

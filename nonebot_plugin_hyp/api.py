@@ -7,9 +7,9 @@ import asyncio
 from nonebot.log import logger
 from typing import Literal, Dict, Union
 from nonebot import get_plugin_config
-from .utils import Utils
+from .utils import Config
 
-plugin_config = get_plugin_config(Utils)
+plugin_config = get_plugin_config(Config)
 
 
 class Api:
