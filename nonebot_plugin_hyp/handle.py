@@ -3,13 +3,16 @@
 import asyncio
 
 from nonebot.adapters.onebot.v11 import Message
+from nonebot import get_plugin_config
 from nonebot.params import CommandArg
 from typing import Callable, NoReturn
 from nonebot.matcher import Matcher
 
-from .utils import utils
+from .utils import Utils
 from .message import msg
 from .api import api
+
+plugin_config = get_plugin_config(Utils)
 
 
 class Hyp:
@@ -55,8 +58,8 @@ class Hyp:
             await actions[action](matcher, Message(uid))
 
     async def hypapi(self, matcher: Matcher):
-        hyp_apikey = utils.hypixel_apikey
-        ant_apikey = utils.antisniper_apikey
+        hyp_apikey = plugin_config.hypixel_apikey
+        ant_apikey = plugin_config.antisniper_apikey
         reply = await msg.send_apikey_msg(hyp_apikey, ant_apikey)
         await matcher.finish(reply)
 

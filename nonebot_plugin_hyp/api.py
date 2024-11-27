@@ -6,8 +6,10 @@ import asyncio
 
 from nonebot.log import logger
 from typing import Literal, Dict, Union
+from nonebot import get_plugin_config
+from .utils import Utils
 
-from .utils import utils
+plugin_config = get_plugin_config(Utils)
 
 
 class Api:
@@ -55,7 +57,7 @@ class Api:
             try:
                 async with httpx.AsyncClient() as client:
                     uuid = mcdata.get("id")
-                    apikey = utils.hypixel_apikey
+                    apikey = plugin_config.hypixel_apikey
                     url = self.hypixel_player.format(apikey, uuid)
                     res: httpx.Response = await client.get(url, timeout=10)
                     if res.status_code == 200:
@@ -86,7 +88,7 @@ class Api:
             try:
                 async with httpx.AsyncClient() as client:
                     uuid: int = mcdata.get("id")
-                    apikey: int = utils.hypixel_apikey
+                    apikey: int = plugin_config.hypixel_apikey
                     url = self.hypixel_status.format(apikey, uuid)
                     res: httpx.Response = await client.get(url, timeout=10)
                     if res.status_code == 200:
